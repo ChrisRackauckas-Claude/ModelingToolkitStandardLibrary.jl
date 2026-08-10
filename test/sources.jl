@@ -705,8 +705,10 @@ end
     end
 
     @testset "BSplineInterpolation" begin
+        bspline_args = Base.pkgversion(DataInterpolations) < v"9" ?
+            (3, :Uniform, :Uniform) : (3, :Uniform)
         @named i = ParametrizedInterpolation(
-            BSplineInterpolation, u, x, 3, :Uniform, :Uniform
+            BSplineInterpolation, u, x, bspline_args...
         )
         eqs = [i.input.u ~ t, D(y) ~ i.output.u]
 
