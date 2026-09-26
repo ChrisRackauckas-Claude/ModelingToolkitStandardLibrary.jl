@@ -57,14 +57,26 @@ end
     @test sol.retcode == Success
     @test sol[pt1.output.u] ≈ pt1_func.(sol.t, k, T) atol = 1.0e-3
 
-    # Test highpass feature
+    # Test highpass feature: Y/U = k*sT/(sT+1) (DC gain 0, high-frequency gain k).
+    # Unit-step response is y(t) = k*exp(-t/T). Agrees with (sT+1-k)/(sT+1) only at k=1.
+    highpass_step(t, k, T) = k * exp(-t / T)
+    abstol = 1.0e-6
+    reltol = 1.0e-6
     @named pt1 = FirstOrder(; k = k, T = T, lowpass = false)
     @named iosys = System(connect(c.output, pt1.input), t, systems = [pt1, c])
     sys = mtkcompile(iosys)
     prob = ODEProblem(sys, Pair[], (0.0, 100.0))
-    sol = solve(prob, Rodas4())
+    sol = solve(prob, Rodas4(); abstol, reltol)
     @test sol.retcode == Success
-    @test sol[pt1.output.u] ≈ k .- pt1_func.(sol.t, k, T) atol = 1.0e-3
+    # Tolerance derived from solver tolerances (scaled by gain magnitude)
+    tol = 100 * max(abstol, reltol * abs(k))
+    @test sol[pt1.output.u] ≈ highpass_step.(sol.t, k, T) atol = tol
+    @test sol[pt1.output.u] ≈ k .- pt1_func.(sol.t, k, T) atol = tol
+    @test abs(sol[pt1.output.u][end]) ≤ tol # asymptotic DC gain is 0
+    # Docstring must document the implemented high-pass TF, not (sT+1-k)/(sT+1)
+    docstr = string(Base.Docs.doc(FirstOrder))
+    @test occursin("k*sT", docstr)
+    @test !occursin("sT + 1 - k", docstr)
 end
 
 @testset "PT2" begin
