@@ -619,11 +619,9 @@ end
     # savefig(plt, "rc_circuit_test_variable_resistor")
 end
 @testset "NMOS Transistor" begin
-    @component function SimpleNMOSCircuit(; name, V_cc = 5.0, V_b = 3.5)
-        pars = @parameters begin
-            V_cc = V_cc
-            V_b = V_b
-        end
+    @component function SimpleNMOSCircuit(;
+            name, V_cc = SciCompDSL.NoValue(), V_b = SciCompDSL.NoValue()
+        )
         systems = @named begin
             Q1 = NMOS()
             Vcc = Voltage()
@@ -632,6 +630,10 @@ end
 
             Vcc_const = Constant(k = V_cc)
             Vb_const = Constant(k = V_b)
+        end
+        pars = @parameters begin
+            V_cc = (V_cc === SciCompDSL.NoValue() ? 5.0 : V_cc)
+            V_b = (V_b === SciCompDSL.NoValue() ? 3.5 : V_b)
         end
         eqs = [
             #voltage sources
@@ -659,11 +661,9 @@ end
     @test sol[sys.Q1.s.v] < sol[sys.Q1.d.v]
 
     # test device symmetry
-    @component function FlippedNMOSCircuit(; name, V_cc = 5.0, V_b = 3.5)
-        pars = @parameters begin
-            V_cc = V_cc
-            V_b = V_b
-        end
+    @component function FlippedNMOSCircuit(;
+            name, V_cc = SciCompDSL.NoValue(), V_b = SciCompDSL.NoValue()
+        )
         systems = @named begin
             Q1 = NMOS()
             Vcc = Voltage()
@@ -672,6 +672,10 @@ end
 
             Vcc_const = Constant(k = V_cc)
             Vb_const = Constant(k = V_b)
+        end
+        pars = @parameters begin
+            V_cc = (V_cc === SciCompDSL.NoValue() ? 5.0 : V_cc)
+            V_b = (V_b === SciCompDSL.NoValue() ? 3.5 : V_b)
         end
         eqs = [
             #voltage sources
@@ -698,12 +702,10 @@ end
 end
 
 @testset "PMOS Transistor" begin
-    @component function SimplePMOSCircuit(; name, V_s = 5.0, V_b = 3.5, V_d = 0.0)
-        pars = @parameters begin
-            V_s = V_s
-            V_b = V_b
-            V_d = V_d
-        end
+    @component function SimplePMOSCircuit(;
+            name, V_s = SciCompDSL.NoValue(), V_b = SciCompDSL.NoValue(),
+            V_d = SciCompDSL.NoValue()
+        )
         systems = @named begin
             Q1 = PMOS()
             Vs = Voltage()
@@ -714,6 +716,11 @@ end
             Vs_const = Constant(k = V_s)
             Vb_const = Constant(k = V_b)
             Vd_const = Constant(k = V_d)
+        end
+        pars = @parameters begin
+            V_s = (V_s === SciCompDSL.NoValue() ? 5.0 : V_s)
+            V_b = (V_b === SciCompDSL.NoValue() ? 3.5 : V_b)
+            V_d = (V_d === SciCompDSL.NoValue() ? 0.0 : V_d)
         end
         eqs = [
             #voltage sources
@@ -741,12 +748,10 @@ end
     @test sol[sys.Q1.s.i][1] > 0.0
 
     # device symmetry
-    @component function FlippedPMOSCircuit(; name, V_s = 5.0, V_b = 3.5, V_d = 0.0)
-        pars = @parameters begin
-            V_s = V_s
-            V_b = V_b
-            V_d = V_d
-        end
+    @component function FlippedPMOSCircuit(;
+            name, V_s = SciCompDSL.NoValue(), V_b = SciCompDSL.NoValue(),
+            V_d = SciCompDSL.NoValue()
+        )
         systems = @named begin
             Q1 = PMOS()
             Vs = Voltage()
@@ -757,6 +762,11 @@ end
             Vs_const = Constant(k = V_s)
             Vb_const = Constant(k = V_b)
             Vd_const = Constant(k = V_d)
+        end
+        pars = @parameters begin
+            V_s = (V_s === SciCompDSL.NoValue() ? 5.0 : V_s)
+            V_b = (V_b === SciCompDSL.NoValue() ? 3.5 : V_b)
+            V_d = (V_d === SciCompDSL.NoValue() ? 0.0 : V_d)
         end
         eqs = [
             #voltage sources
@@ -785,11 +795,9 @@ end
 end
 
 @testset "NPN Tests" begin
-    @component function SimpleNPNCircuit(; name, V_cc = 0.0, V_b = 0.0)
-        pars = @parameters begin
-            V_cc = V_cc
-            V_b = V_b
-        end
+    @component function SimpleNPNCircuit(;
+            name, V_cc = SciCompDSL.NoValue(), V_b = SciCompDSL.NoValue()
+        )
         systems = @named begin
             Q1 = NPN()
             Vcc = Voltage()
@@ -798,6 +806,10 @@ end
 
             Vcc_const = Constant(k = V_cc)
             Vb_const = Constant(k = V_b)
+        end
+        pars = @parameters begin
+            V_cc = (V_cc === SciCompDSL.NoValue() ? 0.0 : V_cc)
+            V_b = (V_b === SciCompDSL.NoValue() ? 0.0 : V_b)
         end
         eqs = [
             #voltage sources
@@ -823,11 +835,9 @@ end
     @test sol[sys.Q1.b.i][1] + sol[sys.Q1.e.i][1] + sol[sys.Q1.c.i][1] ≈ 0.0
 
     # test NPN with substrate
-    @component function SimpleNPNCircuitSubstrate(; name, V_cc = 0.0, V_b = 0.0)
-        pars = @parameters begin
-            V_cc = V_cc
-            V_b = V_b
-        end
+    @component function SimpleNPNCircuitSubstrate(;
+            name, V_cc = SciCompDSL.NoValue(), V_b = SciCompDSL.NoValue()
+        )
         systems = @named begin
             Q1 = NPN(use_substrate = true)
             Vcc = Voltage()
@@ -837,6 +847,10 @@ end
 
             Vcc_sine = Sine(frequency = 0.5)
             Vb_const = Constant(k = V_b)
+        end
+        pars = @parameters begin
+            V_cc = (V_cc === SciCompDSL.NoValue() ? 0.0 : V_cc)
+            V_b = (V_b === SciCompDSL.NoValue() ? 0.0 : V_b)
         end
         eqs = [
             #voltage sources
@@ -869,11 +883,9 @@ end
 end
 
 @testset "PNP Tests" begin
-    @component function SimplePNPCircuit(; name, V_cc = 0.0, V_b = 0.0)
-        pars = @parameters begin
-            V_cc = V_cc
-            V_b = V_b
-        end
+    @component function SimplePNPCircuit(;
+            name, V_cc = SciCompDSL.NoValue(), V_b = SciCompDSL.NoValue()
+        )
         systems = @named begin
             Q1 = PNP()
             Vcc = Voltage()
@@ -882,6 +894,10 @@ end
 
             Vcc_const = Constant(k = V_cc)
             Vb_const = Constant(k = V_b)
+        end
+        pars = @parameters begin
+            V_cc = (V_cc === SciCompDSL.NoValue() ? 0.0 : V_cc)
+            V_b = (V_b === SciCompDSL.NoValue() ? 0.0 : V_b)
         end
         eqs = [
             #voltage sources
@@ -907,11 +923,9 @@ end
     @test sol[sys.Q1.b.i][1] + sol[sys.Q1.e.i][1] + sol[sys.Q1.c.i][1] ≈ 0.0
 
     # test PNP with substrate
-    @component function SimplePNPCircuitSubstrate(; name, V_cc = 0.0, V_b = 0.0)
-        pars = @parameters begin
-            V_cc = V_cc
-            V_b = V_b
-        end
+    @component function SimplePNPCircuitSubstrate(;
+            name, V_cc = SciCompDSL.NoValue(), V_b = SciCompDSL.NoValue()
+        )
         systems = @named begin
             Q1 = PNP(use_substrate = true)
             Vcc = Voltage()
@@ -921,6 +935,10 @@ end
 
             Vcc_sine = Sine(frequency = 0.5)
             Vb_const = Constant(k = V_b)
+        end
+        pars = @parameters begin
+            V_cc = (V_cc === SciCompDSL.NoValue() ? 0.0 : V_cc)
+            V_b = (V_b === SciCompDSL.NoValue() ? 0.0 : V_b)
         end
         eqs = [
             #voltage sources
