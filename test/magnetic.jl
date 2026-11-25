@@ -72,10 +72,9 @@ using OrdinaryDiffEqRosenbrock: Rodas4
     @test maximum(abs, flux_balance) <= 4 * eps(flux_scale)
 end
 
-@testset "EddyCurrent" begin
-    # R is a dependent parameter bound to rho*l/A, so setting rho, l, A on a
-    # problem must change the eddy-current dynamics.
-    @named ec = Magnetic.FluxTubes.EddyCurrent(Phi = 0.0)
+# The instance name selects which flux coordinate `mtkcompile` retains, hence both names.
+@testset "EddyCurrent $name" for name in (:ec, :zz)
+    ec = Magnetic.FluxTubes.EddyCurrent(; name, Phi = 0.0, rho = 3.0, l = 2.0, A = 4.0)
     @named src = Magnetic.FluxTubes.ConstantMagneticPotentialDifference(V_m = 1.0)
     @named g = Magnetic.FluxTubes.Ground()
     @named model = System(
@@ -86,9 +85,27 @@ end
         ], t; systems = [src, ec, g]
     )
     sys = mtkcompile(model)
+    ec = getproperty(sys, name)
+
+    # Zero initial flux and a constant source V_m give Phi(1) = V_m * R.
+    function check(prob, R, V_m)
+        @test prob.ps[ec.R] ≈ R
+        sol = solve(prob, Rodas4())
+        @test sol.retcode == Success
+        @test sol(1.0; idxs = ec.Phi) ≈ V_m * R
+    end
+
     for (rho, l, A) in ((0.098e-6, 1.0, 1.0), (1.0, 1.0, 1.0), (1.0, 2.0, 1 / 2))
         prob = ODEProblem(sys, [ec.rho => rho, ec.l => l, ec.A => A], (0.0, 1.0))
-        @test prob.ps[ec.R] ≈ rho * l / A
-        @test prob.f(prob.u0, prob.p, 0.0)[1] ≈ rho * l / A
+        check(prob, rho * l / A, 1.0)
     end
+
+    V_m = -2.0
+    problem(op) = ODEProblem(sys, [sys.src.V_m => V_m; op], (0.0, 1.0))
+    check(problem(Pair[]), 1.5, V_m)
+    check(problem([ec.l => 8.0]), 6.0, V_m)
+    check(problem([ec.A => 2.0]), 3.0, V_m)
+    check(problem([ec.R => 7.0]), 7.0, V_m)
+    check(problem([ec.R => 7.0, ec.l => 8.0]), 7.0, V_m)
+    check(remake(problem(Pair[]); p = [ec.l => 8.0]), 6.0, V_m)
 end
