@@ -221,6 +221,17 @@ Initial magnetic flux flowing into the port_p can be set with `Phi` ([`Wb`])
   - `rho`: [ohm * m] Resistivity of flux tube material (default: Iron at 20degC)
   - `l`: [m] Average length of eddy current path
   - `A`: [m^2] Cross sectional area of eddy current path
+  - `R`: [ohm] Electrical resistance of eddy current path (default: `rho * l / A`)
+
+The default of `R` is evaluated from `rho`, `l` and `A` when a problem is constructed.
+Setting `rho`, `l` or `A` in place on an existing problem (e.g. `prob.ps[ec.l] = 2`)
+leaves `R` unchanged.
+
+To use a measured resistance, give it directly, as in
+`ODEProblem(sys, [ec.R => 7.0], tspan)`; it takes precedence over the geometry.
+`remake` with a new `p` that does not contain `ec.R` evaluates the default again, even if
+the problem was constructed with a measured resistance, so include `ec.R` in that `p` to
+keep it.
 """
 @component function EddyCurrent(; name, Phi = nothing, rho = 0.098e-6, l = 1, A = 1)
     @named two_port = TwoPort(; Phi)
@@ -230,7 +241,7 @@ Initial magnetic flux flowing into the port_p can be set with `Phi` ([`Wb`])
         rho = rho, [description = "Resistivity of flux tube material"]
         l = l, [description = "Average length of eddy current path"]
         A = A, [description = "Cross sectional area of eddy current path"]
-        R = rho * l / A, [description = "Electrical resistance of eddy current path"]
+        R, [description = "Electrical resistance of eddy current path"]
     end
 
     systems = @named begin
@@ -243,6 +254,9 @@ Initial magnetic flux flowing into the port_p can be set with `Phi` ([`Wb`])
         D(Phi) ~ V_m * R,
     ]
 
-    sys = System(equations, t, vars, pars; name, systems)
+    # A default rather than a binding, so that R can also be set directly.
+    initial_conditions = [R => rho * l / A]
+
+    sys = System(equations, t, vars, pars; name, systems, initial_conditions)
     return extend(sys, two_port)
 end
